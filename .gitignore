@@ -1,0 +1,45 @@
+# ---- Model weights (excluded per submission policy) ----
+*.pth
+*.pt
+*.ckpt
+*.pkl
+*.safetensors
+*.onnx
+checkpoints/
+
+# ---- Raw / external data ----
+data/
+*.zip
+*.tar
+*.tar.gz
+
+# ---- Python ----
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# ---- LaTeX build artifacts ----
+*.aux
+*.log
+*.out
+*.toc
+*.lof
+*.lot
+*.bbl
+*.blg
+*.abs
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+*.synctex(busy)
+*.nav
+*.snm
+*.vrb
+
+# ---- Editors / OS ----
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
