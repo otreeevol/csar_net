@@ -1,0 +1,44 @@
+\documentclass[border=4pt]{standalone}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{tikz}
+\usetikzlibrary{positioning,arrows.meta,fit,calc,shadows}
+\begin{document}
+\begin{tikzpicture}[
+			box/.style={rectangle,draw,thick,rounded corners=2pt,minimum height=0.85cm,minimum width=1.25cm,font=\scriptsize,align=center,inner sep=2pt,top color=white,bottom color=gray!25,drop shadow},
+			stg/.style={rectangle,draw,thick,rounded corners=3pt,minimum height=1.55cm,minimum width=1.5cm,font=\scriptsize,align=center,top color=white,bottom color=blue!18,drop shadow},
+			attnb/.style={rectangle,draw=red!70!black,thick,rounded corners=2pt,minimum height=0.52cm,minimum width=1.5cm,font=\tiny,align=center,top color=white,bottom color=red!22,drop shadow},
+			lbl/.style={font=\scriptsize},
+			arr/.style={-{Stealth[length=1.8mm]},thick},
+		]
+			% ---- main pipeline ----
+			\node[box] (in) {Input\\$224{\times}224{\times}3$};
+			\node[box,right=0.7cm of in] (stem) {Stem\\$7{\times}7$, s2\\+maxpool};
+			\node[stg,right=0.7cm of stem] (s1) {Stage 1\\$64$ch\\$\times2$};
+			\node[stg,right=0.6cm of s1] (s2) {Stage 2\\$128$ch\\$\times2$};
+			\node[stg,right=0.6cm of s2] (s3) {Stage 3\\$256$ch\\$\times2$};
+			\node[stg,right=0.6cm of s3] (s4) {Stage 4\\$512$ch\\$\times2$};
+			\node[box,right=0.7cm of s4] (gap) {GAP\\$512$-d};
+			\node[box,right=0.7cm of gap] (fc) {FC\\$6$ logits};
+			\node[box,right=0.7cm of fc,bottom color=yellow!45] (loss) {LDAM loss\\margin $+$ DRW};
+			\draw[arr] (in)--(stem);
+			\draw[arr] (stem)--(s1);
+			\draw[arr] (s1)--(s2);
+			\draw[arr] (s2)--(s3);
+			\draw[arr] (s3)--(s4);
+			\draw[arr] (s4)--(gap);
+			\draw[arr] (gap)--(fc);
+			\draw[arr] (fc)--(loss);
+			% ---- CBAM tags on stages 3,4 ----
+			\node[attnb,below=0.35cm of s3] (a3) {CBAM};
+			\node[attnb,below=0.35cm of s4] (a4) {CBAM};
+			\draw[thick,red!70!black] (s3.south)--(a3.north);
+			\draw[thick,red!70!black] (s4.south)--(a4.north);
+			% ---- CBAM module detail (bottom) ----
+			\node[attnb,below=1.6cm of a3] (cdet) {Channel attn\\Avg/MaxPool\\$+$ shared MLP\\$\otimes$};
+			\node[attnb,right=0.6cm of cdet] (sdet) {Spatial attn\\concat\\$+$ $7{\times}7$ conv\\$\otimes$};
+			\draw[arr,red!70!black] (a3.south)--(cdet.north);
+			\draw[arr,red!70!black] (cdet)--(sdet);
+			\node[lbl,below=0.35cm of cdet] (clbl) {$\mathbf{F}\rightarrow\hat{\mathbf{F}}\rightarrow\tilde{\mathbf{F}}$};
+		\end{tikzpicture}
+\end{document}
