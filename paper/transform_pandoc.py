@@ -83,7 +83,7 @@ s = _front_matter(s)
 # The CAS class auto-titles the bibliography, but pandoc's citeproc does not,
 # so give it a plain \section*{References} heading before \bibliography.
 s = s.replace(
-    '\\bibliographystyle{model5-names}\n\t\\bibliography{csar_refs}',
+    '\\bibliographystyle{elsarticle-num}\n\t\\bibliography{csar_refs}',
     '\\section*{References}\n\\bibliography{csar_refs}',
 )
 
