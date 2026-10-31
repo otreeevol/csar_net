@@ -20,7 +20,7 @@
 			\node[stg,right=0.6cm of s3] (s4) {Stage 4\\$512$ch\\$\times2$};
 			\node[box,right=0.7cm of s4] (gap) {GAP\\$512$-d};
 			\node[box,right=0.7cm of gap] (fc) {FC\\$6$ logits};
-			\node[box,right=0.7cm of fc,bottom color=yellow!45] (loss) {LDAM loss\\margin $+$ DRW};
+			\node[box,right=0.7cm of fc,bottom color=yellow!45] (loss) {LDAM loss\\margin $+$ reweighting};
 			\draw[arr] (in)--(stem);
 			\draw[arr] (stem)--(s1);
 			\draw[arr] (s1)--(s2);

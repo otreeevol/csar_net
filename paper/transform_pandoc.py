@@ -3,13 +3,26 @@
    1. replace the CAS title/author block with plain, editable title/author/affiliation
    2. replace the 3 inline TikZ figures with the pre-rendered PNGs.
 """
-import io, os
+import io, os, re
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 SRC = os.path.join(HERE, 'csar_net.tex')
 DST = os.path.join(HERE, 'csar_net_pandoc.tex')
 
 s = io.open(SRC, encoding='utf-8').read()
+
+# ---- 0. resolve \ref / \eqref to real numbers using the .aux label table ----
+# (the .aux is written by the LaTeX compile; recompile csar_net.tex before this step)
+_aux_path = os.path.join(HERE, 'csar_net.aux')
+_labels = {}
+if os.path.exists(_aux_path):
+    _aux = io.open(_aux_path, encoding='utf-8').read()
+    for _m in re.finditer(r'\\newlabel\{([^}]+)\}\{\{([^}]+)\}\{(\d+)\}', _aux):
+        _labels[_m.group(1)] = _m.group(2)
+s = re.sub(r'\\eqref\s*\{([^}]+)\}',
+           lambda m: '(%s)' % _labels.get(m.group(1), m.group(1)), s)
+s = re.sub(r'\\ref\s*\{([^}]+)\}',
+           lambda m: _labels.get(m.group(1), m.group(1)), s)
 
 # ---- 1. strip the CAS title/author block ----
 # Title, authors, affiliation and corresponding-author note are supplied to
