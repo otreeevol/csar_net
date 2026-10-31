@@ -24,6 +24,26 @@ s = re.sub(r'\\eqref\s*\{([^}]+)\}',
 s = re.sub(r'\\ref\s*\{([^}]+)\}',
            lambda m: _labels.get(m.group(1), m.group(1)), s)
 
+# number float captions so the Word manuscript prints "Table 8:" / "Figure 3:"
+# like the PDF (pandoc does not auto-number \caption). The \label is dropped.
+def _cap_repl(m):
+    body, pfx, name = m.group(1), m.group(2), m.group(3)
+    num = _labels.get('%s:%s' % (pfx, name))
+    if num is None:
+        return m.group(0)
+    word = 'Figure' if pfx == 'fig' else 'Table'
+    return '\\caption{%s %s: %s}' % (word, num, body)
+
+s = re.sub(r'\\caption\{([^\n]*)\}[ \t]*\n[ \t]*\\label\{(tbl|fig|alg):([a-zA-Z]+)\}',
+           _cap_repl, s)
+
+# make the remaining tables pandoc-parseable (pandoc silently drops them):
+# unwrap \resizebox around a tabular, drop @{} padding specs and \\[Npt] row spacing.
+s = re.sub(r'\\resizebox\{\\textwidth\}\{!\}\{%\s*(?=\\begin\{tabular\})', '', s)
+s = s.replace('\\end{tabular}}', '\\end{tabular}')
+s = s.replace('@{}', '')
+s = s.replace('\\\\[3pt]', '\\\\')
+
 # ---- 1. strip the CAS title/author block ----
 # Title, authors, affiliation and corresponding-author note are supplied to
 # pandoc via --metadata so they land as a proper editable title block at the
@@ -37,6 +57,27 @@ new_block = (
     '%% Title, authors and affiliation are injected via pandoc --metadata.\n'
 )
 s = s[:a] + new_block + s[b:]
+
+# ---- 1.5 render CAS front-matter blocks that pandoc does not recognise ----
+# pandoc understands \begin{abstract}, but not the CAS \begin{highlights} /
+# \begin{keywords} environments (nor \sep). Without this step the Word
+# manuscript shows five unlabelled sentences and a bare keyword blob with a
+# stray space before every comma.
+def _front_matter(s):
+    m = re.search(r'\\begin\{keywords\}(.*?)\\end\{keywords\}', s, re.S)
+    if m:
+        terms = [re.sub(r'\s+', ' ', t).strip() for t in m.group(1).split(r'\sep')]
+        terms = [t for t in terms if t]
+        s = s[:m.start()] + '\\textbf{Keywords:} ' + ', '.join(terms) + '\n' + s[m.end():]
+    m = re.search(r'\\begin\{highlights\}(.*?)\\end\{highlights\}', s, re.S)
+    if m:
+        items = re.findall(r'\\item\s*(.*?)(?=\\item|\Z)', m.group(1), re.S)
+        items = [re.sub(r'\s+', ' ', t).strip() for t in items if t.strip()]
+        bullets = '\n'.join('  \\item ' + t for t in items)
+        s = s[:m.start()] + '\\textbf{Highlights}\n\\begin{itemize}\n' + bullets + '\n\\end{itemize}\n' + s[m.end():]
+    return s
+
+s = _front_matter(s)
 
 # ---- 2. add an explicit References heading ----
 # The CAS class auto-titles the bibliography, but pandoc's citeproc does not,
